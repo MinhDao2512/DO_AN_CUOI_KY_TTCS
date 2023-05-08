@@ -18,10 +18,10 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-#include "string.h"
+
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "string.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -39,14 +39,17 @@
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
+TIM_HandleTypeDef htim2;
+TIM_HandleTypeDef htim4;
 
 /* USER CODE BEGIN PV */
-
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
+static void MX_TIM2_Init(void);
+static void MX_TIM4_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -168,7 +171,6 @@ void LCD_str(char *str1)
 char PW[11]; //Mang de luu mat khau khi nhap tu ban phim
 char MK[6] = {'2','5','1','2','0','2'}; //Mang MK cua nguoi dung
 int i = 0; //Tang chi so cho mang PW
-int dem = 0; //Ktr xem so luong ky tu co vuot qua muc cho phep hay khong?
 
 void Disp_pass_key(char key_var)
 {
@@ -181,22 +183,10 @@ void Disp_pass_key(char key_var)
 void check(char key_var,int *cnt){
 	if(key_var != '\0')
 	{
-		++dem;
 		if(key_var >= '0' && key_var <= '9')
 		{
 			PW[i] = key_var;
 			i++;
-		}
-		if(dem == 11)
-		{
-			*cnt += 1;
-			LCD(0x01,0);
-			LCD_str("ICORRECT!");
-			i = 0;
-			HAL_Delay(500);
-			LCD(0x01, 0);
-			LCD_str("ENTER PASSWORD:");
-			LCD(0xC0, 0);
 		}
 		if(key_var == '=')
 		{
@@ -207,21 +197,29 @@ void check(char key_var,int *cnt){
 				i = 0;
 				LCD(0xC0, 0);
 				LCD_str("OPENED!");
+				HAL_Delay(500);
+				LCD(0x01,0);
+				LCD_str("XIN CHAO!!!!");
 			}
 			else
 			{
 				*cnt += 1;
 				LCD(0x01,0);
-				LCD_str("ICORRECT!");
+				LCD_str("INCORRECT!");
 				i = 0;
-				HAL_Delay(500);
+				HAL_Delay(200);
 				LCD(0x01, 0);
-				LCD_str("ENTER PASSWORD:");
+				LCD_str("ENTER AGAIN:");
 				LCD(0xC0, 0);
 			}
 		}
 	}
 }
+
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
+	HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
+}
+
 /* USER CODE END 0 */
 
 /**
@@ -253,7 +251,10 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+  MX_TIM2_Init();
+  MX_TIM4_Init();
   /* USER CODE BEGIN 2 */
+  	  HAL_TIM_Base_Start_IT(&htim2);
   	  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_0|GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3
                               |GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_6|GPIO_PIN_7
                               |GPIO_PIN_8|GPIO_PIN_9, GPIO_PIN_RESET);
@@ -263,7 +264,7 @@ int main(void)
 
   	  LCD_init();
   	  LCD_str("WELCOME!");
-  	  HAL_Delay(300);
+  	  HAL_Delay(200);
   	  LCD(0x80, 0);
   	  LCD_str("ENTER PASSWORD:");
   	  LCD(0xC0, 0);
@@ -276,8 +277,6 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_SET);
-	HAL_Delay(100);
 	var1 = key_press();
 	Disp_pass_key(var1);
 	check(var1,&cnt);
@@ -289,8 +288,7 @@ int main(void)
 		LCD_str("WARNING!!!");
 		break;
 	}
-	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_RESET);
-	HAL_Delay(100);
+	HAL_Delay(150);
   }
   /* USER CODE END 3 */
 }
@@ -334,6 +332,96 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
+}
+
+/**
+  * @brief TIM2 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM2_Init(void)
+{
+
+  /* USER CODE BEGIN TIM2_Init 0 */
+
+  /* USER CODE END TIM2_Init 0 */
+
+  TIM_ClockConfigTypeDef sClockSourceConfig = {0};
+  TIM_MasterConfigTypeDef sMasterConfig = {0};
+
+  /* USER CODE BEGIN TIM2_Init 1 */
+
+  /* USER CODE END TIM2_Init 1 */
+  htim2.Instance = TIM2;
+  htim2.Init.Prescaler = 16000;
+  htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim2.Init.Period = 149;
+  htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
+  if (HAL_TIM_Base_Init(&htim2) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
+  if (HAL_TIM_ConfigClockSource(&htim2, &sClockSourceConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim2, &sMasterConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM2_Init 2 */
+
+  /* USER CODE END TIM2_Init 2 */
+
+}
+
+/**
+  * @brief TIM4 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM4_Init(void)
+{
+
+  /* USER CODE BEGIN TIM4_Init 0 */
+
+  /* USER CODE END TIM4_Init 0 */
+
+  TIM_ClockConfigTypeDef sClockSourceConfig = {0};
+  TIM_MasterConfigTypeDef sMasterConfig = {0};
+
+  /* USER CODE BEGIN TIM4_Init 1 */
+
+  /* USER CODE END TIM4_Init 1 */
+  htim4.Instance = TIM4;
+  htim4.Init.Prescaler = 16000;
+  htim4.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim4.Init.Period = 199;
+  htim4.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim4.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
+  if (HAL_TIM_Base_Init(&htim4) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
+  if (HAL_TIM_ConfigClockSource(&htim4, &sClockSourceConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim4, &sMasterConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM4_Init 2 */
+
+  /* USER CODE END TIM4_Init 2 */
+
 }
 
 /**
