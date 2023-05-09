@@ -176,7 +176,18 @@ void Disp_pass_key(char key_var)
 {
 	if(key_var != '\0')
 	{
-		LCD(key_var, 1);
+		if(key_var == 'x'){
+			LCD(0xC0, 0);
+			for(int k = 0;k<i;k++)
+			{
+				LCD(' ',1);
+			}
+			LCD(0xC0, 0);
+			i = 0;
+		}
+		else{
+			LCD('*', 1);
+		}
 	}
 }
 
@@ -216,7 +227,8 @@ void check(char key_var,int *cnt){
 	}
 }
 
-void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
+{
 	HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
 }
 
