@@ -169,7 +169,7 @@ void LCD_str(char *str1)
 }
 
 char PW[11]; //Mang de luu mat khau khi nhap tu ban phim
-char MK[6] = {'2','5','1','2','0','2'}; //Mang MK cua nguoi dung
+char MK[6] = {'2','5','1','2','0','1'}; //Mang MK cua nguoi dung
 int i = 0; //Tang chi so cho mang PW
 
 void Disp_pass_key(char key_var)
