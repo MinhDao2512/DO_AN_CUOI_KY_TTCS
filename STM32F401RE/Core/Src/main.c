@@ -281,7 +281,7 @@ int main(void)
 	Disp_pass_key(var1);
 	check(var1,&cnt);
 	if(cnt == 5)
-	{
+	{	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_12, GPIO_PIN_SET);
 		LCD(0x01, 0);
 		LCD_str("CO KE DOT NHAP!");
 		LCD(0xC0, 0);
@@ -289,6 +289,7 @@ int main(void)
 		break;
 	}
 	HAL_Delay(150);
+
   }
   /* USER CODE END 3 */
 }
@@ -455,6 +456,13 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : PC12 */
+   GPIO_InitStruct.Pin = GPIO_PIN_12;
+   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+   GPIO_InitStruct.Pull = GPIO_NOPULL;
+   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
   /*Configure GPIO pins : PA0 PA1 PA2 PA3
                            PA4 PA5 PA6 PA7
