@@ -877,7 +877,7 @@ void Disp_pass_key(char key_var)
  8000840:	200000cc 	.word	0x200000cc
 
 08000844 <check>:
-
+//Day La Code Cua Nhom 1
 void check(char key_var,int *cnt){
  8000844:	b580      	push	{r7, lr}
  8000846:	b082      	sub	sp, #8

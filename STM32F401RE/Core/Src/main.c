@@ -190,7 +190,7 @@ void Disp_pass_key(char key_var)
 		}
 	}
 }
-
+//Day La Code Cua Nhom 1
 void check(char key_var,int *cnt){
 	if(key_var != '\0')
 	{
