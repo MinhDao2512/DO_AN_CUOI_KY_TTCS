@@ -116,37 +116,37 @@ void LCD(uint16_t val_1, uint16_t cmd)
 {
 	uint8_t data1;
 
-	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_8, cmd);			//set RS = cmd; (cmd=0) => Command; (cmd=1) => Data
+	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_8, cmd);			//set RS = cmd; (cmd=0) => Command; (cmd=1) => Data
 
 	data1 = val_1 & 0x01;														//mask bit and assign it to GPIO 0
-	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_0, data1);
+	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_0, data1);
 
 	data1 = (val_1>>1) & 0x01;											//mask bit and assign it to GPIO 1
-	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_1, data1);
+	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, data1);
 
 	data1 = (val_1>>2) & 0x01;											//mask bit and assign it to GPIO 2
-	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_2, data1);
+	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_2, data1);
 
 	data1 = (val_1>>3) & 0x01;											//mask bit and assign it to GPIO 3
-	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_3, data1);
+	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_3, data1);
 
 	data1 = (val_1>>4) & 0x01;											//mask bit and assign it to GPIO 4
-	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, data1);
+	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_4, data1);
 
 	data1 = (val_1>>5) & 0x01;											//mask bit and assign it to GPIO 5
-	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, data1);
+	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_5, data1);
 
 	data1 = (val_1>>6) & 0x01;											//mask bit and assign it to GPIO 6
-	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_6, data1);
+	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_6, data1);
 
 	data1 = (val_1>>7) & 0x01;											//mask bit and assign it to GPIO 7
-	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_7, data1);
+	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_7, data1);
 
 	//---------------------------------------------//
 	//		Enable Pulse		//
-	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_9, GPIO_PIN_SET);
+	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_9, GPIO_PIN_SET);
 	HAL_Delay(5);
-	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_9, GPIO_PIN_RESET);
+	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_9, GPIO_PIN_RESET);
 }
 
 void LCD_init(void)
@@ -267,7 +267,7 @@ int main(void)
   MX_TIM4_Init();
   /* USER CODE BEGIN 2 */
   	  HAL_TIM_Base_Start_IT(&htim2);
-  	  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_0|GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3
+  	  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_0|GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3
                               |GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_6|GPIO_PIN_7
                               |GPIO_PIN_8|GPIO_PIN_9, GPIO_PIN_RESET);
 
@@ -448,44 +448,26 @@ static void MX_GPIO_Init(void)
 
   /* GPIO Ports Clock Enable */
   __HAL_RCC_GPIOC_CLK_ENABLE();
-  __HAL_RCC_GPIOA_CLK_ENABLE();
   __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_RESET);
-
-  /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_0|GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3
-                          |GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_6|GPIO_PIN_7
-                          |GPIO_PIN_8|GPIO_PIN_9, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13|GPIO_PIN_0|GPIO_PIN_1|GPIO_PIN_2
+                          |GPIO_PIN_3|GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_6
+                          |GPIO_PIN_7|GPIO_PIN_8|GPIO_PIN_9, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOB, GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_6|GPIO_PIN_7, GPIO_PIN_RESET);
 
-  /*Configure GPIO pin : PC13 */
-  GPIO_InitStruct.Pin = GPIO_PIN_13;
+  /*Configure GPIO pins : PC13 PC0 PC1 PC2
+                           PC3 PC4 PC5 PC6
+                           PC7 PC8 PC9 */
+  GPIO_InitStruct.Pin = GPIO_PIN_13|GPIO_PIN_0|GPIO_PIN_1|GPIO_PIN_2
+                          |GPIO_PIN_3|GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_6
+                          |GPIO_PIN_7|GPIO_PIN_8|GPIO_PIN_9;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
-
-  /*Configure GPIO pin : PC12 */
-   GPIO_InitStruct.Pin = GPIO_PIN_12;
-   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-   GPIO_InitStruct.Pull = GPIO_NOPULL;
-   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
-
-  /*Configure GPIO pins : PA0 PA1 PA2 PA3
-                           PA4 PA5 PA6 PA7
-                           PA8 PA9 */
-  GPIO_InitStruct.Pin = GPIO_PIN_0|GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3
-                          |GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_6|GPIO_PIN_7
-                          |GPIO_PIN_8|GPIO_PIN_9;
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
   /*Configure GPIO pins : PB0 PB1 PB2 PB3 */
   GPIO_InitStruct.Pin = GPIO_PIN_0|GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3;
