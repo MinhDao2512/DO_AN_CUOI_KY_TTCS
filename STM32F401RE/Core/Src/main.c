@@ -22,6 +22,8 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "string.h"
+#include "CLCD.h"
+#include "stdio.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -56,6 +58,9 @@ static void MX_TIM4_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+CLCD_Name LCD1;
+uint8_t Count;
+char LCD_send[16];
 int check_clm(uint16_t pin_var)
 {
 	int clm;
@@ -112,62 +117,6 @@ unsigned char key_press(void)
 		return '\0';
 }
 
-void LCD(uint16_t val_1, uint16_t cmd)
-{
-	uint8_t data1;
-
-	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_8, cmd);			//set RS = cmd; (cmd=0) => Command; (cmd=1) => Data
-
-	data1 = val_1 & 0x01;														//mask bit and assign it to GPIO 0
-	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_0, data1);
-
-	data1 = (val_1>>1) & 0x01;											//mask bit and assign it to GPIO 1
-	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, data1);
-
-	data1 = (val_1>>2) & 0x01;											//mask bit and assign it to GPIO 2
-	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_2, data1);
-
-	data1 = (val_1>>3) & 0x01;											//mask bit and assign it to GPIO 3
-	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_3, data1);
-
-	data1 = (val_1>>4) & 0x01;											//mask bit and assign it to GPIO 4
-	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_4, data1);
-
-	data1 = (val_1>>5) & 0x01;											//mask bit and assign it to GPIO 5
-	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_5, data1);
-
-	data1 = (val_1>>6) & 0x01;											//mask bit and assign it to GPIO 6
-	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_6, data1);
-
-	data1 = (val_1>>7) & 0x01;											//mask bit and assign it to GPIO 7
-	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_7, data1);
-
-	//---------------------------------------------//
-	//		Enable Pulse		//
-	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_9, GPIO_PIN_SET);
-	HAL_Delay(5);
-	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_9, GPIO_PIN_RESET);
-}
-
-void LCD_init(void)
-{
-	LCD((uint16_t)0x38, 0);			//2 lines, 5*7 matrix
-	LCD(0x0C, 0);			//Display on, cursor off
-	LCD(0x0E, 0);			//Display on, cursor blinking
-	LCD(0x06, 0);			//Increment cursor (shift cursor to right)
-	LCD(0x01, 0);			//Clear display screen
-	LCD(0x80, 0);			//Force cursor to beginning ( 1st line)
-}
-
-void LCD_str(char *str1)
-{
-	while(*str1 != '\0')
-	{
-		LCD(*str1, 1);
-		str1++;
-	}
-}
-
 char PW[11]; //Mang de luu mat khau khi nhap tu ban phim
 char MK[6] = {'2','5','1','2','0','1'}; //Mang MK cua nguoi dung
 int i = 0; //Tang chi so cho mang PW
@@ -177,16 +126,16 @@ void Disp_pass_key(char key_var)
 	if(key_var != '\0')
 	{
 		if(key_var == 'x'){
-			LCD(0xC0, 0);
+			CLCD_Clear(&LCD1);
 			for(int k = 0;k<i;k++)
 			{
-				LCD(' ',1);
+				CLCD_WriteChar(&LCD1,' ');
 			}
-			LCD(0xC0, 0);
+			CLCD_Clear(&LCD1);
 			i = 0;
 		}
 		else{
-			LCD('*', 1);
+			CLCD_WriteChar(&LCD1,'*');
 		}
 	}
 }
@@ -203,25 +152,49 @@ void check(char key_var,int *cnt){
 		{
 			if(strcmp(PW,MK) == 0)
 			{
-				LCD(0x01,0);
-				LCD_str("DA MO KHOA!\n");
+				CLCD_Clear(&LCD1);
+				CLCD_SetCursor(&LCD1, 0, 0);
+				CLCD_WriteString(&LCD1, "DA MO KHOA!");
 				i = 0;
-				LCD(0xC0, 0);
-				LCD_str("OPENED!");
+				CLCD_SetCursor(&LCD1, 0, 1);
+				CLCD_WriteString(&LCD1, "OPENED!");
 				HAL_Delay(500);
-				LCD(0x01,0);
-				LCD_str("XIN CHAO!!!!");
+				CLCD_Clear(&LCD1);
+				CLCD_WriteString(&LCD1, "XIN CHAO!!!!");
+				HAL_Delay(2000);
+
+				//Sao khi da mo khoa thanh cong
+				CLCD_Clear(&LCD1);
+				CLCD_SetCursor(&LCD1, 0, 0);
+				CLCD_WriteString(&LCD1, "WELCOME!!!");
+				HAL_Delay(200);
+				CLCD_Clear(&LCD1);
+				CLCD_SetCursor(&LCD1, 0, 0);
+				CLCD_WriteString(&LCD1, "ENTER PASSWORD:");
+				CLCD_SetCursor(&LCD1, 0, 1);
+				CLCD_CursorOn(&LCD1);
+				cnt = 0;
+				return;
 			}
 			else
 			{
 				*cnt += 1;
-				LCD(0x01,0);
-				LCD_str("INCORRECT!");
+				CLCD_Clear(&LCD1);
+				CLCD_WriteString(&LCD1, "INCORRECT!");
+				sprintf(LCD_send, " Dem:%d", *cnt);
+				CLCD_WriteString(&LCD1, LCD_send);
+				if(*cnt == 5)
+				{
+					CLCD_SetCursor(&LCD1, 0, 1);
+					CLCD_WriteString(&LCD1, "CANH BAO MUC 3!");
+				}
 				i = 0;
-				HAL_Delay(200);
-				LCD(0x01, 0);
-				LCD_str("ENTER AGAIN:");
-				LCD(0xC0, 0);
+				HAL_Delay(300);
+				if(*cnt < 5){
+					CLCD_Clear(&LCD1);
+					CLCD_WriteString(&LCD1, "ENTER AGAIN:");
+					CLCD_SetCursor(&LCD1, 0, 1);
+				}
 			}
 		}
 	}
@@ -232,6 +205,9 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 	HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
 }
 
+//CLCD_Name LCD1;
+//uint8_t Count;
+//char LCD_send[16];
 /* USER CODE END 0 */
 
 /**
@@ -266,20 +242,20 @@ int main(void)
   MX_TIM2_Init();
   MX_TIM4_Init();
   /* USER CODE BEGIN 2 */
-  	  HAL_TIM_Base_Start_IT(&htim2);
-  	  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_0|GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3
-                              |GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_6|GPIO_PIN_7
-                              |GPIO_PIN_8|GPIO_PIN_9, GPIO_PIN_RESET);
-
-  	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0|GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3, GPIO_PIN_SET);
-  	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_6|GPIO_PIN_7, GPIO_PIN_RESET);
-
-  	  LCD_init();
-  	  LCD_str("WELCOME!");
-  	  HAL_Delay(200);
-  	  LCD(0x80, 0);
-  	  LCD_str("ENTER PASSWORD:");
-  	  LCD(0xC0, 0);
+  	HAL_TIM_Base_Start_IT(&htim2);
+  	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0|GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3, GPIO_PIN_SET);
+  	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_6|GPIO_PIN_7, GPIO_PIN_RESET);
+  	CLCD_4BIT_Init(&LCD1, 16, 2, CS_GPIO_Port, CS_Pin, EN_GPIO_Port, EN_Pin,
+  										D4_GPIO_Port, D4_Pin, D5_GPIO_Port, D5_Pin,
+  										D6_GPIO_Port, D6_Pin, D7_GPIO_Port, D7_Pin);
+  	CLCD_SetCursor(&LCD1, 0, 0);
+  	CLCD_WriteString(&LCD1, "WELCOME!!!");
+  	HAL_Delay(200);
+  	CLCD_Clear(&LCD1);
+  	CLCD_SetCursor(&LCD1, 0, 0);
+  	CLCD_WriteString(&LCD1, "ENTER PASSWORD:");
+  	CLCD_SetCursor(&LCD1, 0, 1);
+  	CLCD_CursorOn(&LCD1);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -293,15 +269,28 @@ int main(void)
 	Disp_pass_key(var1);
 	check(var1,&cnt);
 	if(cnt == 5)
-	{	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_12, GPIO_PIN_SET);
-		LCD(0x01, 0);
-		LCD_str("CO KE DOT NHAP!");
-		LCD(0xC0, 0);
-		LCD_str("WARNING!!!");
-		break;
+	{
+		HAL_Delay(500);
+		HAL_GPIO_WritePin(GPIOC, GPIO_PIN_12, GPIO_PIN_SET);
+		CLCD_Clear(&LCD1);
+		CLCD_SetCursor(&LCD1, 0, 0);
+		CLCD_WriteString(&LCD1, "CO KE DOT NHAP!");
+		CLCD_SetCursor(&LCD1, 0, 1);
+		CLCD_WriteString(&LCD1, "WARNING!!!");
+		HAL_Delay(2000);
+		//Sau khi thong bao co ke dot nhap:
+		CLCD_Clear(&LCD1);
+		CLCD_SetCursor(&LCD1, 0, 0);
+		CLCD_WriteString(&LCD1, "WELCOME!!!");
+	  	HAL_Delay(200);
+		CLCD_Clear(&LCD1);
+		CLCD_SetCursor(&LCD1, 0, 0);
+		CLCD_WriteString(&LCD1, "ENTER PASSWORD:");
+		CLCD_SetCursor(&LCD1, 0, 1);
+		CLCD_CursorOn(&LCD1);
+		cnt = 0;
 	}
 	HAL_Delay(150);
-
   }
   /* USER CODE END 3 */
 }
@@ -449,21 +438,21 @@ static void MX_GPIO_Init(void)
   /* GPIO Ports Clock Enable */
   __HAL_RCC_GPIOC_CLK_ENABLE();
   __HAL_RCC_GPIOB_CLK_ENABLE();
+  __HAL_RCC_GPIOA_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13|GPIO_PIN_0|GPIO_PIN_1|GPIO_PIN_2
-                          |GPIO_PIN_3|GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_6
-                          |GPIO_PIN_7|GPIO_PIN_8|GPIO_PIN_9, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13|GPIO_PIN_12, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_6|GPIO_PIN_7, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_15|GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_6
+                          |GPIO_PIN_7, GPIO_PIN_RESET);
 
-  /*Configure GPIO pins : PC13 PC0 PC1 PC2
-                           PC3 PC4 PC5 PC6
-                           PC7 PC8 PC9 */
-  GPIO_InitStruct.Pin = GPIO_PIN_13|GPIO_PIN_0|GPIO_PIN_1|GPIO_PIN_2
-                          |GPIO_PIN_3|GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_6
-                          |GPIO_PIN_7|GPIO_PIN_8|GPIO_PIN_9;
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_8|GPIO_PIN_9|GPIO_PIN_10|GPIO_PIN_11
+                          |GPIO_PIN_12, GPIO_PIN_RESET);
+
+  /*Configure GPIO pins : PC13 PC12 */
+  GPIO_InitStruct.Pin = GPIO_PIN_13|GPIO_PIN_12;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
@@ -475,12 +464,23 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : PB4 PB5 PB6 PB7 */
-  GPIO_InitStruct.Pin = GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_6|GPIO_PIN_7;
+  /*Configure GPIO pins : PB15 PB4 PB5 PB6
+                           PB7 */
+  GPIO_InitStruct.Pin = GPIO_PIN_15|GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_6
+                          |GPIO_PIN_7;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : PA8 PA9 PA10 PA11
+                           PA12 */
+  GPIO_InitStruct.Pin = GPIO_PIN_8|GPIO_PIN_9|GPIO_PIN_10|GPIO_PIN_11
+                          |GPIO_PIN_12;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
 }
 
