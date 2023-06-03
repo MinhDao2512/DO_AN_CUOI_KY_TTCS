@@ -19,28 +19,11 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 
-/* Private includes ----------------------------------------------------------*/
-/* USER CODE BEGIN Includes */
+
 #include "string.h"
 #include "CLCD.h"
 #include "stdio.h"
-/* USER CODE END Includes */
 
-/* Private typedef -----------------------------------------------------------*/
-/* USER CODE BEGIN PTD */
-
-/* USER CODE END PTD */
-
-/* Private define ------------------------------------------------------------*/
-/* USER CODE BEGIN PD */
-/* USER CODE END PD */
-
-/* Private macro -------------------------------------------------------------*/
-/* USER CODE BEGIN PM */
-
-/* USER CODE END PM */
-
-/* Private variables ---------------------------------------------------------*/
 TIM_HandleTypeDef htim2;
 TIM_HandleTypeDef htim4;
 
@@ -52,12 +35,7 @@ void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_TIM2_Init(void);
 static void MX_TIM4_Init(void);
-/* USER CODE BEGIN PFP */
 
-/* USER CODE END PFP */
-
-/* Private user code ---------------------------------------------------------*/
-/* USER CODE BEGIN 0 */
 CLCD_Name LCD1;
 uint8_t Count;
 char LCD_send[16];
@@ -92,7 +70,7 @@ int check_clm(uint16_t pin_var)
 unsigned char key_press(void)
 {
 	int clm_var;
-	unsigned char key_arr[4][4] = {{'7', '8', '9', '/'},{'4', '5', '6', 'x'},{'1', '2', '3', '-'},{'*', '0', '=', '+'}};
+	unsigned char key_arr[4][4] = {{'1', '2', '3', 'A'},{'4', '5', '6', 'B'},{'7', '8', '9', 'C'},{'*', '0', '=', 'D'}};
 	if (HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_0) == 0)
 	{
 		clm_var = check_clm(GPIO_PIN_0);
@@ -118,20 +96,39 @@ unsigned char key_press(void)
 }
 
 char PW[11]; //Mang de luu mat khau khi nhap tu ban phim
-char MK[6] = {'2','5','1','2','0','1'}; //Mang MK cua nguoi dung
+char MK[6] = {'2','2','2','3','3','3'}; //Mang MK cua nguoi dung
 int i = 0; //Tang chi so cho mang PW
+
+int so_sanh(char a[],char b[],int n,int m)
+{
+	if(n > m || n < m)
+		return 0;
+	else
+	{
+		for(int j=0;j<6;j++)
+		{
+			if(a[j] != b[j]) return 0;
+		}
+		return 1;
+	}
+}
+
+void ktao()
+{
+	for(int j=0;j<11;j++) PW[j] = 'z';
+}
 
 void Disp_pass_key(char key_var)
 {
 	if(key_var != '\0')
 	{
-		if(key_var == 'x'){
-			CLCD_Clear(&LCD1);
+		if(key_var == 'D'){
+			CLCD_SetCursor(&LCD1, 0, 1);
 			for(int k = 0;k<i;k++)
 			{
 				CLCD_WriteChar(&LCD1,' ');
 			}
-			CLCD_Clear(&LCD1);
+			CLCD_SetCursor(&LCD1, 0, 1);
 			i = 0;
 		}
 		else{
@@ -139,7 +136,7 @@ void Disp_pass_key(char key_var)
 		}
 	}
 }
-//Day La Code Cua Nhom 1
+
 void check(char key_var,int *cnt){
 	if(key_var != '\0')
 	{
@@ -148,32 +145,32 @@ void check(char key_var,int *cnt){
 			PW[i] = key_var;
 			i++;
 		}
-		if(key_var == '=')
+		if(key_var == '*')
 		{
-			if(strcmp(PW,MK) == 0)
+			if(so_sanh(PW,MK,i,6) == 1)
 			{
 				CLCD_Clear(&LCD1);
 				CLCD_SetCursor(&LCD1, 0, 0);
 				CLCD_WriteString(&LCD1, "DA MO KHOA!");
-				i = 0;
 				CLCD_SetCursor(&LCD1, 0, 1);
 				CLCD_WriteString(&LCD1, "OPENED!");
-				HAL_Delay(500);
+				HAL_Delay(1000);
 				CLCD_Clear(&LCD1);
-				CLCD_WriteString(&LCD1, "XIN CHAO!!!!");
-				HAL_Delay(2000);
-
+				CLCD_WriteString(&LCD1, "XIN CHAO!!!");
+				ktao();
+				i = 0;
+				HAL_Delay(5000);
 				//Sao khi da mo khoa thanh cong
 				CLCD_Clear(&LCD1);
 				CLCD_SetCursor(&LCD1, 0, 0);
-				CLCD_WriteString(&LCD1, "WELCOME!!!");
-				HAL_Delay(200);
+				CLCD_WriteString(&LCD1, "!!!WELCOME!!!");
+				HAL_Delay(1000);
 				CLCD_Clear(&LCD1);
 				CLCD_SetCursor(&LCD1, 0, 0);
 				CLCD_WriteString(&LCD1, "ENTER PASSWORD:");
 				CLCD_SetCursor(&LCD1, 0, 1);
 				CLCD_CursorOn(&LCD1);
-				cnt = 0;
+				*cnt = 0;
 				return;
 			}
 			else
@@ -181,16 +178,17 @@ void check(char key_var,int *cnt){
 				*cnt += 1;
 				CLCD_Clear(&LCD1);
 				CLCD_WriteString(&LCD1, "INCORRECT!");
+				ktao();
 				sprintf(LCD_send, " Dem:%d", *cnt);
 				CLCD_WriteString(&LCD1, LCD_send);
-				if(*cnt == 5)
+				if(*cnt == 3)
 				{
 					CLCD_SetCursor(&LCD1, 0, 1);
-					CLCD_WriteString(&LCD1, "CANH BAO MUC 3!");
+					CLCD_WriteString(&LCD1, "CANH BAO MUC 3");
 				}
 				i = 0;
-				HAL_Delay(300);
-				if(*cnt < 5){
+				HAL_Delay(1000);
+				if(*cnt < 3){
 					CLCD_Clear(&LCD1);
 					CLCD_WriteString(&LCD1, "ENTER AGAIN:");
 					CLCD_SetCursor(&LCD1, 0, 1);
@@ -205,39 +203,21 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 	HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
 }
 
-//CLCD_Name LCD1;
-//uint8_t Count;
-//char LCD_send[16];
-/* USER CODE END 0 */
 
-/**
-  * @brief  The application entry point.
-  * @retval int
-  */
 int main(void)
 {
   /* USER CODE BEGIN 1 */
 	char var1; //luu ky tu tuong ung tren KeyPAD
 	int cnt = 0; //Dem xem so lan da nhap mat khau sai
-  /* USER CODE END 1 */
 
-  /* MCU Configuration--------------------------------------------------------*/
 
-  /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
+
   HAL_Init();
 
-  /* USER CODE BEGIN Init */
 
-  /* USER CODE END Init */
-
-  /* Configure the system clock */
   SystemClock_Config();
 
-  /* USER CODE BEGIN SysInit */
 
-  /* USER CODE END SysInit */
-
-  /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_TIM2_Init();
   MX_TIM4_Init();
@@ -250,7 +230,7 @@ int main(void)
   										D6_GPIO_Port, D6_Pin, D7_GPIO_Port, D7_Pin);
   	CLCD_SetCursor(&LCD1, 0, 0);
   	CLCD_WriteString(&LCD1, "WELCOME!!!");
-  	HAL_Delay(200);
+  	HAL_Delay(2000);
   	CLCD_Clear(&LCD1);
   	CLCD_SetCursor(&LCD1, 0, 0);
   	CLCD_WriteString(&LCD1, "ENTER PASSWORD:");
@@ -262,35 +242,38 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+	  var1 = key_press();
+	  	Disp_pass_key(var1);
+	  	check(var1,&cnt);
+	  	if(cnt == 3)
+	  	{
+	  		HAL_Delay(500);
+	  		HAL_GPIO_WritePin(GPIOC, GPIO_PIN_12, GPIO_PIN_SET);
+	  		HAL_Delay(3000);
+	  		HAL_GPIO_WritePin(GPIOC, GPIO_PIN_12, GPIO_PIN_RESET);
+	  		CLCD_Clear(&LCD1);
+	  		CLCD_SetCursor(&LCD1, 0, 0);
+	  		CLCD_WriteString(&LCD1, "CO KE DOT NHAP!");
+	  		CLCD_SetCursor(&LCD1, 0, 1);
+	  		CLCD_WriteString(&LCD1, "WARNING!!!");
+	  		HAL_Delay(2000);
+	  		//Sau khi thong bao co ke dot nhap:
+	  		CLCD_Clear(&LCD1);
+	  		CLCD_SetCursor(&LCD1, 0, 0);
+	  		CLCD_WriteString(&LCD1, "WELCOME!!!");
+	  	  	HAL_Delay(2000);
+	  		CLCD_Clear(&LCD1);
+	  		CLCD_SetCursor(&LCD1, 0, 0);
+	  		CLCD_WriteString(&LCD1, "ENTER PASSWORD:");
+	  		CLCD_SetCursor(&LCD1, 0, 1);
+	  		CLCD_CursorOn(&LCD1);
+	  		cnt = 0;
+	  	}
+	  	HAL_Delay(175);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-	var1 = key_press();
-	Disp_pass_key(var1);
-	check(var1,&cnt);
-	if(cnt == 5)
-	{
-		HAL_Delay(500);
-		HAL_GPIO_WritePin(GPIOC, GPIO_PIN_12, GPIO_PIN_SET);
-		CLCD_Clear(&LCD1);
-		CLCD_SetCursor(&LCD1, 0, 0);
-		CLCD_WriteString(&LCD1, "CO KE DOT NHAP!");
-		CLCD_SetCursor(&LCD1, 0, 1);
-		CLCD_WriteString(&LCD1, "WARNING!!!");
-		HAL_Delay(2000);
-		//Sau khi thong bao co ke dot nhap:
-		CLCD_Clear(&LCD1);
-		CLCD_SetCursor(&LCD1, 0, 0);
-		CLCD_WriteString(&LCD1, "WELCOME!!!");
-	  	HAL_Delay(200);
-		CLCD_Clear(&LCD1);
-		CLCD_SetCursor(&LCD1, 0, 0);
-		CLCD_WriteString(&LCD1, "ENTER PASSWORD:");
-		CLCD_SetCursor(&LCD1, 0, 1);
-		CLCD_CursorOn(&LCD1);
-		cnt = 0;
-	}
-	HAL_Delay(150);
+
   }
   /* USER CODE END 3 */
 }
@@ -434,6 +417,8 @@ static void MX_TIM4_Init(void)
 static void MX_GPIO_Init(void)
 {
   GPIO_InitTypeDef GPIO_InitStruct = {0};
+/* USER CODE BEGIN MX_GPIO_Init_1 */
+/* USER CODE END MX_GPIO_Init_1 */
 
   /* GPIO Ports Clock Enable */
   __HAL_RCC_GPIOC_CLK_ENABLE();
@@ -482,6 +467,8 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
+/* USER CODE BEGIN MX_GPIO_Init_2 */
+/* USER CODE END MX_GPIO_Init_2 */
 }
 
 /* USER CODE BEGIN 4 */
